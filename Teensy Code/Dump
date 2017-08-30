@@ -1,0 +1,291 @@
+boot
+found sdinit
+printing init
+printing init
+printing init
+printing init
+printing init
+printing init
+printing init
+printing init
+printing init
+printing init
+Alright
+False Alarm
+Jumpman
+Love To Lay
+Low Life
+Lucifer
+Modern Soul
+Pink + White
+Seniorita
+Uber Everywhere
+$
+SDINIT.TXT
+ALRIGHT.MP3
+77FALSEA~1.MP3
+88JUMPMAN.MP3                What are these numbers from?
+77LOVETO~1.MP3
+88LOWLIF~1.MP3
+88LUCIFER.MP3
+77MODERN~1.MP3
+88PINK_W~1.MP3
+88SDINIT.TXT~~ALRIGHT.MP3~~FALSEA~1.MP3~~JUMPMAN.MP3~~LOVETO~1.MP3~~LOWLIF~1.MP3~~LUCIFER.MP3~~MODERN~1.MP3~~PINK_W~1.MP3~~
+
+
+
+///////////
+
+else if (state == 0) {   // Base state
+    oled.clearBuffer();
+    oled.setCursor(0, Y_INC);
+    oled.print("Short press to PLAY");
+    oled.setCursor(0, 2 * Y_INC);
+    oled.print("Long press to LEARN");
+    oled.sendBuffer();
+    if (flag == 1) {
+      state = 7;
+    } else if (flag == 2) {
+      state = 1;
+    }
+  } else if (state == 1) {  // LEARN: Pick gesture to learn
+    if (flag == 1) {
+      gesture_num = (gesture_num + 1) % NUM_GESTURES;
+    } else if (flag == 2) {
+      state = 2;
+    }
+    oled.clearBuffer();
+    oled.setCursor(0, Y_INC);
+    oled.print("LEARN: " + gesture_names[gesture_num]);
+    oled.setCursor(0, 2 * Y_INC);
+    oled.print("short press to change");
+    oled.setCursor(0, 3 * Y_INC);
+    oled.print("long press to accept");
+    oled.sendBuffer();
+  } else if (state == 2) {  // LEARN: Wait to record
+    if (flag == 1) {
+      state = 3;
+      data_index = 0;
+    }
+    else if (flag == 2) {
+      state = 0;
+    }
+    oled.clearBuffer();
+    oled.setCursor(0, Y_INC);
+    oled.print("LEARN: " + gesture_names[gesture_num]);
+    oled.setCursor(0, 2 * Y_INC);
+    oled.print("short press to record");
+    oled.setCursor(0, 3 * Y_INC);
+    oled.print("long press to restart");
+    oled.sendBuffer();
+  } else if (state == 3) { // LEARN: Recording
+    if (flag == 1 || flag == 2) {
+      state = 4;
+    }
+    else {
+      imu.readAccelData(imu.accelCount);
+      time_since_sample = 0;
+      imu.ax = imu.accelCount[0] * imu.aRes;
+      data[data_index] = imu.ax;
+      data_index++;
+      if (data_index >= ARRAY_SIZE) {
+        state = 4;
+      }
+      while (time_since_sample <= SAMPLE_INTERVAL);
+    }
+    digitalWrite(LED_PIN, HIGH);
+    oled.clearBuffer();
+    oled.setCursor(0, Y_INC);
+    oled.print("LEARN");
+    oled.setCursor(0, 2 * Y_INC);
+    oled.print("recording gesture...");
+    oled.setCursor(0, 3 * Y_INC);
+    oled.print("press to stop");
+    oled.sendBuffer();
+  } else if (state == 4) {  // LEARN: Reject or accept gesture
+    if (flag == 1) {
+      state = 5;
+    } else if (flag == 2) {
+      state = 6;
+    }
+    digitalWrite(LED_PIN, LOW);
+    oled.clearBuffer();
+    oled.setCursor(0, Y_INC);
+    oled.print("LEARN");
+    oled.setCursor(0, 2 * Y_INC);
+    oled.print("short press to reject");
+    oled.setCursor(0, 3 * Y_INC);
+    oled.print("long press to accept");
+    oled.sendBuffer();
+  } else if (state == 5) {  // LEARN: Reject
+    state = 2;
+    oled.clearBuffer();
+    oled.setCursor(0, Y_INC);
+    oled.print("LEARN");
+    oled.setCursor(0, 2 * Y_INC);
+    oled.print("reject");
+    oled.sendBuffer();
+    delay(1000);
+  } else if (state == 6) {  // LEARN: Accept & upload
+    state = 1;
+    oled.clearBuffer();
+    oled.setCursor(0, Y_INC);
+    oled.print("LEARN");
+    oled.setCursor(0, 2 * Y_INC);
+    oled.print("accept...sending...");
+    oled.sendBuffer();
+    out = send_to_server("post", data);
+    oled.clearBuffer();
+    oled.setCursor(0, 10);
+    oled.print("LEARN");
+    pretty_print(0, 2 * Y_INC, out, 6, 8, 2, oled);
+    oled.sendBuffer();
+    delay(2000);
+  } else if (state == 7) {  // Play
+    if (flag == 1) {
+      state = 8;
+      data_index = 0;
+    }
+    else if (flag == 2) {
+      state = 0;
+    }
+    oled.clearBuffer();
+    oled.setCursor(0, Y_INC);
+    oled.print("PLAY");
+    oled.setCursor(0, 2 * Y_INC);
+    oled.print("short press to record");
+    oled.setCursor(0, 3 * Y_INC);
+    oled.print("long press to go back");
+    oled.sendBuffer();
+  } else if (state == 8) {  // PLAY: Read
+    if (flag == 1 || flag == 2) {
+      state = 9;
+    } else {
+      imu.readAccelData(imu.accelCount);
+      time_since_sample = 0;
+      imu.ax = imu.accelCount[0] * imu.aRes;
+      data[data_index] = imu.ax;
+      data_index++;
+      if (data_index >= ARRAY_SIZE) {
+        state = 9;
+      }
+      while (time_since_sample <= SAMPLE_INTERVAL);
+    }
+    digitalWrite(LED_PIN, HIGH);
+    oled.clearBuffer();
+    oled.setCursor(0, Y_INC);
+    oled.print("PLAY");
+    oled.setCursor(0, 2 * Y_INC);
+    oled.print("recording gesture...");
+    oled.setCursor(0, 3 * Y_INC);
+    oled.print("press to stop");
+    oled.sendBuffer();
+  } else if (state == 9) {  // PLAY: send gesture to server
+    digitalWrite(LED_PIN, LOW);
+    oled.clearBuffer();
+    oled.setCursor(0, Y_INC);
+    oled.print("PLAY");
+    oled.setCursor(0, 2 * Y_INC);
+    oled.print("comparing...");
+    delay(1000);
+    oled.sendBuffer();
+    out = send_to_server("get", data);
+    state = 10;
+  } else if (state == 10) { // PLAY: display match results
+    if (flag == 1 || flag == 2) {
+      state = 7;
+    }
+    oled.clearBuffer();
+    oled.setCursor(0, Y_INC);
+    oled.print("PLAY");
+    pretty_print(0, 2 * Y_INC, out, 6, 8, 2, oled);
+    oled.sendBuffer();
+  }
+
+
+
+boot
+found sdinit
+printing init
+printing init
+printing init
+printing init
+printing init
+printing init
+printing init
+printing init
+printing init
+printing init
+Alright
+False Alarm
+Jumpman
+Love To Lay
+Low Life
+Lucifer
+Modern Soul
+Pink + White
+Seniorita
+Uber Everywhere
+$
+SDINIT.TXT
+ALRIGHT.MP3
+77FALSEA~1.MP3
+88JUMPMAN.MP3
+77LOVETO~1.MP3
+88LOWLIF~1.MP3
+88LUCIFER.MP3
+77MODERN~1.MP3
+88PINK_W~1.MP3
+88Alright
+False Alarm
+Jumpman
+Love To Lay
+Low Life
+Lucifer
+Modern Soul
+Pink + White
+Seniorita
+Uber Everywhere
+sent data
+
+3,2,0,4,1,
+3
+2
+0
+4
+1
+step
+
+16
+tracknum
+0
+0
+
+MP3
+Playing file: 0 - ALRIGHT.MP3
+
+///////////////////////////////////////////////////////////////////
+
+
+
+
+
+for ( int h = 0 ; h<NUMTRACKS ; h++ )              
+    {
+        for(int l=0; l<NUMTRACKS - 1; l++)
+        {
+            if(tracklist[l]>tracklist[l+1]) 
+            {
+                String temp1 = tracklist[l];
+                tracklist[l] = tracklist[l+1];       
+                tracklist[l+1] = temp1;
+                int temp2= trackext[l];
+                trackext[l] = trackext[l+1];
+                trackext[l+1] = temp2;
+            }
+        }
+    }
+
+
+
+'Love To Lay\r', 'uber everywhere', 'Jumpman\r', 'Alright\r', 'Low Life\r', 'False Alarm\r'

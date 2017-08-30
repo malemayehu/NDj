@@ -1,0 +1,39 @@
+
+int[] parse_int_arr(String input, String delim, int* arrlen){
+      int anchor1 = 0;
+      int anchor2;
+      int temparr[tracknum];
+
+      // for our own record (mapping song title to number if the array transfers don't work)
+      for ( int i = 0; i < NUMTRACKS; i++) {
+        anchor2 = input.indexOf(delim, anchor1);
+        if (anchor2 == -1) {
+          temparr[i] = input.substring(anchor1).toInt();
+          arrlen = i;
+          break;
+        }
+        else {
+          temparr[i] = input.substring(anchor1, anchor2).toInt();
+          anchor1 = anchor2;
+        }
+      }
+}
+String[] parse_str_arr(String input, String delim, int* arrlen){
+      int anchor1 = 0;
+      int anchor2;
+      String temparr[tracknum];
+
+      // for our own record (mapping song title to number if the array transfers don't work)
+      for ( int i = 0; i < NUMTRACKS; i++) {
+        anchor2 = input.indexOf(delim, anchor1);
+        if (anchor2 == -1) {
+          temparr[i] = input.substring(anchor1);
+          arrlen = i;
+          break;
+        }
+        else {
+          temparr[i] = input.substring(anchor1, anchor2);
+          anchor1 = anchor2;
+        }
+      }
+}
